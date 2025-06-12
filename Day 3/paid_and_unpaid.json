@@ -1,0 +1,249 @@
+{
+  "name": "paid and unpaid",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -460,
+        -40
+      ],
+      "id": "1475595c-c81f-451f-a3d1-9ab1e98459d8",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1m-HJjhENKCyCsiZoF1eDUvodI7TZW1DSMLRQsgUlyKQ/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 265617292,
+          "mode": "list",
+          "cachedResultName": "Sheet2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1m-HJjhENKCyCsiZoF1eDUvodI7TZW1DSMLRQsgUlyKQ/edit#gid=265617292"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -320,
+        -40
+      ],
+      "id": "52f70bde-3de9-4541-b44c-b593c16dcd60",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "R7itpGmp9UrqpJz6",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "You are a Finance Assistant AI designed to help automate invoice reminders for overdue payments.\n\nYou will be given a list of invoice records with the following fields:\n- Invoice ID{{ $json['Invoice ID'] }}\n- Client Name{{ $json['Client Name'] }}\n- Client Email{{ $json['Client Email'] }}\n- Invoice Date{{ $json['Invoice Date'] }}\n- Due Date{{ $json['Due Date'] }}\n- Amount (₹){{ $json['Amount (₹)'] }}\n- Payment Status{{ $json['Payment Status'] }}\n- Last Reminder Sent{{ $json['Last Reminder Sent'] }}\n- Notes{{ $json.Notes }}\n\nYour tasks:\n1. Identify any invoice where:\n   - Payment Status is \"Unpaid\"\n   - Due Date is **before today's date**\n   - AND either:\n     - Last Reminder Sent is blank\n     - OR Last Reminder Sent is **more than 7 days ago**\n   \n2. For each identified invoice:\n   - Generate a personalized, professional reminder email addressed to the client (use Client Name and Email).\n   - Mention Invoice ID, Due Date, and Amount due.\n   - Politely request payment and mention any applicable late fees if needed.\n   - Ask them to reply once paid.\n\n3. Output:\n   - A list of emails to be sent with subject and body.\n   - An update for each invoice with today’s date under “Last Reminder Sent”.\n\nToday's date is: {{CURRENT_DATE}}\n\nNow analyze the following data and perform the above tasks:\n{{PASTE_INVOICE_DATA_HERE}}\n\nReturn your output in the following format:\n{\n  \"emails\": [\n    {\n      \"to\": \"client@example.com\",\n      \"subject\": \"\nsend these all data to if node",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        -40
+      ],
+      "id": "6c9bc664-fd9e-45d8-98e7-a89a64256ef4",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -140,
+        160
+      ],
+      "id": "81240d10-b952-4a0d-992c-0b843e0a6c99",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "K3UBl2IdEArQjPEs",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "669d8418-6a27-429f-ab75-50702d344a9e",
+              "leftValue": "={{ $('Google Sheets').item.json['Payment Status'] }}",
+              "rightValue": "paid",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "03f71e40-8fd8-4291-b9ef-a1372178be6a",
+              "leftValue": "={{ $('Google Sheets').item.json['Payment Status'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        180,
+        -40
+      ],
+      "id": "7ed066c6-4144-48db-81fb-12a534197e98",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Google Sheets').item.json['Client Email'] }}",
+        "subject": "paid",
+        "emailType": "text",
+        "message": "={{ $('AI Agent').item.json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        380,
+        -140
+      ],
+      "id": "e1edaec3-e39f-43d0-b7ea-be1e31145c9b",
+      "name": "Gmail",
+      "webhookId": "66975c99-8e46-4ca8-93a7-d907c98fdf8c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "UZ1osOoLaMVW46ZS",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Google Sheets').item.json['Client Email'] }}",
+        "subject": "Unpaid",
+        "emailType": "text",
+        "message": "={{ $('AI Agent').item.json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        360,
+        160
+      ],
+      "id": "854b0397-c618-4657-8104-395bd5263ca7",
+      "name": "Gmail1",
+      "webhookId": "ba726759-f228-4bed-9c72-59e460f63ad7",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "UZ1osOoLaMVW46ZS",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ba7874b1-4a7a-461e-8f3c-0720a0c27239",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b2e847aea1afbad20bc986fdcca4d73233c1a19e7b9e6c4bff5fd7fc4c14840c"
+  },
+  "id": "RzasBpfgnhceu5bh",
+  "tags": []
+}
