@@ -1,0 +1,188 @@
+{
+  "name": "Information",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -260,
+        60
+      ],
+      "id": "f334c3e7-acd9-402a-bfe7-b81902963872",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1m-HJjhENKCyCsiZoF1eDUvodI7TZW1DSMLRQsgUlyKQ/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1599990148,
+          "mode": "list",
+          "cachedResultName": "Sheet3",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1m-HJjhENKCyCsiZoF1eDUvodI7TZW1DSMLRQsgUlyKQ/edit#gid=1599990148"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -260,
+        -120
+      ],
+      "id": "8dc9b1ad-a64a-4fd1-b1a0-442159e632ab",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "R7itpGmp9UrqpJz6",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all input items\nconst items = $input.all();\n\n// Extract headers from the first item\nconst headers = Object.keys(items[0].json);\n\n// Build Markdown header row\nlet markdown = `| ${headers.join(' | ')} |\\n`;\nmarkdown += `| ${headers.map(() => '---').join(' | ')} |\\n`;\n\n// Add each row of data\nfor (const item of items) {\n  const row = headers.map(header => String(item.json[header] || '')).join(' | ');\n  markdown += `| ${row} |\\n`;\n}\n\n// Create JSON string\nconst jsonString = JSON.stringify(items.map(i => i.json), null, 2);\n\n// Return both as fields in the output\nreturn [\n  {\n    json: {\n      markdown_table: markdown,\n      json_data: jsonString\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        -100
+      ],
+      "id": "477ba8c5-2446-40e0-b2a4-ce2c18ae30f0",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.markdown_table }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        80,
+        -100
+      ],
+      "id": "84af7742-f186-4720-9cc2-e0a3a9b65cb1",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        20,
+        80
+      ],
+      "id": "e2a47e7a-766a-4f97-b37d-8e4d07c7878b",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "K3UBl2IdEArQjPEs",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "=aswini1209m@gmail.com",
+        "subject": "this  is a  important  anouncement",
+        "emailType": "text",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        440,
+        -100
+      ],
+      "id": "ed1defda-508f-4d69-b381-7faf5a18299e",
+      "name": "Gmail",
+      "webhookId": "50691f11-3741-4d21-8f24-846ccf59f25b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "UZ1osOoLaMVW46ZS",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0d8ff19a-d6cd-4b1e-9f8b-d021a5cbf474",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b2e847aea1afbad20bc986fdcca4d73233c1a19e7b9e6c4bff5fd7fc4c14840c"
+  },
+  "id": "BAG4ldX9N82r0Sgi",
+  "tags": []
+}
