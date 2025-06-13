@@ -1,0 +1,240 @@
+{
+  "name": "request",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Report collector",
+        "formDescription": "Kindly Fill Your Required Detail in the Form",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email id",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Status",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Completed"
+                  },
+                  {
+                    "option": "Incomplete"
+                  },
+                  {},
+                  {}
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -420,
+        -40
+      ],
+      "id": "d319f7d8-85ab-40f5-a752-7a20415e7d4a",
+      "name": "On form submission",
+      "webhookId": "bb8e01ce-4a7d-4a54-b8ff-5687fbc85b10"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an assistant responsible for generating professional email responses.\n\nAnalyze the following task submission data and generate a formal reply email:\n- Name: {{$json[\"Name\"]}}\n- Email ID: {{$json[\"Email id\"]}}\n- Task Status: {{$json[\"Status\"]}}\n- Submission Time: {{$json[\"submittedAt\"]}}\n\nCompose a professional and appreciative email confirming receipt of the update and acknowledging the task status. Keep it polite, concise, and workplace-appropriate. \n\nOutput Format:\nSubject: [Subject line]\nBody: [Formatted email body]\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        40,
+        -40
+      ],
+      "id": "fac75379-8b2b-4991-8dc5-5aea74c61608",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        20,
+        160
+      ],
+      "id": "888e4cfd-4c9d-4b05-bce8-6a8b73c56245",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "K3UBl2IdEArQjPEs",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        -40
+      ],
+      "id": "fe83efba-8110-4946-af6f-52d8b7f6d2b5",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "sendTo": "aswini1209m@gmail.com",
+        "subject": "important information",
+        "emailType": "text",
+        "message": "=this is an important message from our HR team {{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        720,
+        -40
+      ],
+      "id": "b54839c3-c3bb-4473-8191-be1576ba0f36",
+      "name": "Gmail",
+      "webhookId": "9dd6de73-8c88-4ed9-9240-8236615d0ee2",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "UZ1osOoLaMVW46ZS",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        400,
+        -40
+      ],
+      "id": "7ae3a4ad-0c72-4399-9b92-c77fcc20dc38",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Code').item.json.myNewField }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        500,
+        180
+      ],
+      "id": "c301b9d5-2ee2-4bb6-8eff-0b9ed50aafa4",
+      "name": "Simple Memory"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3501c419-550c-4581-9169-9c6e5db36179",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b2e847aea1afbad20bc986fdcca4d73233c1a19e7b9e6c4bff5fd7fc4c14840c"
+  },
+  "id": "FdFRH6OIBtz6YJ45",
+  "tags": []
+}
