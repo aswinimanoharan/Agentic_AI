@@ -1,0 +1,317 @@
+{
+  "name": "My workflow 5",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "labelIds": [
+            "Label_LeaveRequests",
+            "IMPORTANT"
+          ],
+          "q": ""
+        }
+      },
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1100,
+        20
+      ],
+      "id": "fa2789bf-d5cf-49f9-8dcb-3d84bfde26cc",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "UZ1osOoLaMVW46ZS",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"subject\"]}}",
+              "operation": "contains",
+              "value2": "leave"
+            }
+          ]
+        }
+      },
+      "name": "IF – is Leave Email?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -900,
+        20
+      ],
+      "id": "a5966a23-5f76-4a2a-9765-324e7812dc4b"
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "https://your‑ai‑extractor.endpoint/api/extract",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={{ { text: $json[\"body\"] } }}"
+      },
+      "name": "AI Extractor",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        -660,
+        40
+      ],
+      "id": "8a6219c8-7da5-44a5-a554-52a563e95766"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "sheetId": "YOUR_GOOGLE_SHEET_ID",
+        "range": "Balances!A:C",
+        "options": {}
+      },
+      "name": "Lookup Balance",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 1,
+      "position": [
+        -460,
+        20
+      ],
+      "id": "358cdea5-3910-4d47-a660-45cdc54b4208",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "R7itpGmp9UrqpJz6",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json[\"balance\"]}}",
+              "operation": "largerEqual",
+              "value2": "={{$json[\"daysRequested\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "IF – Enough Balance?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        120
+      ],
+      "id": "975b4910-a280-47b4-a994-e74feb00a373"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "sheetId": "YOUR_GOOGLE_SHEET_ID",
+        "range": "Balances!A:C",
+        "options": {}
+      },
+      "name": "Update Balance",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        -60
+      ],
+      "id": "de9ea321-abba-4842-9d4e-d3c18ed9a4b9",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "R7itpGmp9UrqpJz6",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "subject": "{{\"Leave Approved: \" + $json[\"leaveDates\"]}}",
+        "message": "Hello Alice Johnson,  Your request for **Casual Leave** from **June 20 to June 22, 2025** (3 days) has been **approved**.  Your updated leave balance is: **7 days remaining**.  Enjoy your time off!  Best regards,   HR Team",
+        "toList": [
+          "kaviyaa1504@gmail.com"
+        ],
+        "additionalFields": {}
+      },
+      "name": "Send Approval Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 1,
+      "position": [
+        180,
+        -100
+      ],
+      "id": "69beffa9-2063-4e0e-ac9a-732335a1019d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "UZ1osOoLaMVW46ZS",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "subject": "{{\"Leave Request Rejected: \" + $json[\"leaveDates\"]}}",
+        "message": "Hello Alice Johnson,  Unfortunately, your request for **Casual Leave** from **June 20 to June 22, 2025** (3 days) has been **rejected**.  Reason: You currently have only **2 leave days remaining**, but you requested **3 days**.  Please adjust your leave dates or contact HR for further clarification.  Regards,   HR Team",
+        "additionalFields": {}
+      },
+      "name": "Send Rejection Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 1,
+      "position": [
+        100,
+        220
+      ],
+      "id": "3bc35efe-2d3a-4ae4-a906-dbd03654182e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "UZ1osOoLaMVW46ZS",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "subject": "Leave Request Processed – [Employee Name]",
+        "message": "=Hello [Employee Name],  Your leave request from [From Date] to [To Date] for [Leave Type] has been successfully processed.  Please check your inbox for the final approval or rejection update.  Regards,   HR Team",
+        "additionalFields": {}
+      },
+      "name": "Label Processed",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 1,
+      "position": [
+        420,
+        80
+      ],
+      "id": "6e4e2868-54d3-4c06-9a7f-c2e80f64b919",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "UZ1osOoLaMVW46ZS",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "IF – is Leave Email?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF – is Leave Email?": {
+      "main": [
+        [
+          {
+            "node": "AI Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Extractor": {
+      "main": [
+        [
+          {
+            "node": "Lookup Balance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Balance": {
+      "main": [
+        [
+          {
+            "node": "IF – Enough Balance?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF – Enough Balance?": {
+      "main": [
+        [
+          {
+            "node": "Update Balance",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Rejection Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Balance": {
+      "main": [
+        [
+          {
+            "node": "Send Approval Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Approval Email": {
+      "main": [
+        [
+          {
+            "node": "Label Processed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Rejection Email": {
+      "main": [
+        [
+          {
+            "node": "Label Processed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f117db68-4b76-4a74-955c-72aacfeffd9e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b2e847aea1afbad20bc986fdcca4d73233c1a19e7b9e6c4bff5fd7fc4c14840c"
+  },
+  "id": "M15Dg4sdOr5nCeW8",
+  "tags": []
+}
