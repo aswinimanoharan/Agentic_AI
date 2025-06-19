@@ -1,0 +1,787 @@
+{
+  "name": "hackathon",
+  "nodes": [
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1380,
+        320
+      ],
+      "id": "e4c88f4e-8289-428f-9a36-42b4ef0b856d",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "7Kg48zBQsLDg6CEk",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You will receive structured input from a Google Sheet row via JSON format.\n\nYour task is to extract and return only the following values, each on a **new line**, without any explanations or formatting:\n\n- customer_name  \n- invoice_number\n\n✅ Output Format (exactly like this, no extra words or formatting):\n<customer_name>\n<invoice_number>\n\nReturn only the result. No explanation. No markdown. No code block.\n\nInput:\n{{ $json[\"customer_name\"] }}\n{{ $json[\"invoice_number\"] }}\n{{ $json.due_date }}{{ $json.contact_method }}{{ $json.email_id }}{{ $json.phone_number }}{{ $json.status }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a helpful assistant:You are an invoice data extractor. Your only job is to extract specific fields from the given input and return them in the **exact format** requested.\n\n📌 Rules:\n- Do not explain anything.\n- Do not include code blocks (e.g., no triple backticks).\n- Do not provide sample code or suggestions.\n- Do not use markdown formatting.\n- Do not wrap output in quotes, lists, or labels.\n- Only return the exact output — clean and plain.\n\nWhen asked to extract fields like `customer_name`, `invoice_number`, etc., return only the values requested, in the order requested, separated by newlines or in a JSON object, depending on the prompt.\n\n❗If the prompt asks for JSON, return pure JSON only. If it asks for newline output, return only newline-separated values.\n\nNever return anything else unless explicitly asked.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        0
+      ],
+      "id": "ff2d22bf-cd07-4cae-a78d-6ef0168ede60",
+      "name": " Invoice Info Extractor"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const methodRaw = item.json.contact_method || '';\n  const method = methodRaw.toLowerCase();\n  let subject = null;\n  let message = item.json.reminder_message || '';\n\n  if (method === 'email') {\n    subject = `Reminder: Invoice ${item.json.invoice_number || 'Unknown'} Due`;\n  } else if (method === 'sms') {\n    message = `[SMS] ${message}`;\n  }\n\n  return {\n    json: {\n      ...item.json,\n      channel: method,\n      subject: subject,\n      final_message: message\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2480,
+        -120
+      ],
+      "id": "3b04ea4b-138d-4c1e-ad2f-899093fdb5b1",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1mvoq97P5UkZDSwrdF18isacRZjFK3KpUaZzFwzfw38k/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mvoq97P5UkZDSwrdF18isacRZjFK3KpUaZzFwzfw38k/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "customer_name": "aswini",
+            "invoice_number": "6137876162",
+            "due_date": "12-09-2025",
+            "amount_due": "57687",
+            "contact_method": "email",
+            "email_id": "aswini1209m@gmail.com",
+            "phone_number": "2345678",
+            "status": "good"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "invoice_number",
+              "displayName": "invoice_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "due_date",
+              "displayName": "due_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "amount_due",
+              "displayName": "amount_due",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "contact_method",
+              "displayName": "contact_method",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email_id",
+              "displayName": "email_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "phone_number",
+              "displayName": "phone_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        2640,
+        -160
+      ],
+      "id": "313723b5-f3a0-4c1e-aeef-33a5fd8c3b45",
+      "name": "Google Sheets1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "WUN15fcjFfjb8R0N",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2520,
+        320
+      ],
+      "id": "79ac4be2-d38c-43a8-bd5c-544fd6d1576c",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "7Kg48zBQsLDg6CEk",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "c_dc6af938f6f6dc3ee302b62e2bea04349b2292617e850e1b32e2dc79f49bfd55@group.calendar.google.com",
+          "mode": "id"
+        },
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        2960,
+        -80
+      ],
+      "id": "0cdf9d45-bc6c-4f19-8e31-104e43f36848",
+      "name": "Google Calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "hOe0IRUaGd30rje9",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2840,
+        420
+      ],
+      "id": "eda03fd3-4474-41f4-a2ce-c04304fd8680",
+      "name": "Google Gemini Chat Model3",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "7Kg48zBQsLDg6CEk",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "=define",
+        "text": "=You are a professional business communication assistant.\n\nYour task is to generate a concise and polite payment reminder email based on the following invoice data:\n\n- Customer name: {{ $('Google Sheets3').item.json['customer_name'] }}\n- Invoice number:{{ $('Google Sheets3').item.json['invoice_number'] }} \n- Due date: {{ $('Google Sheets3').item.json['due_date'] }}\n- Amount due:{{ $('Google Sheets3').item.json['amount_due'] }}\n- email id: {{ $('Google Sheets3').item.json['email_id'] }}\n- contact method: {{ $('Google Sheets3').item.json['contact_method'] }}\n- status:{{ $('Google Sheets3').item.json['status'] }}\n\nInstructions:\n- Use the status field to decide the tone of the message:\n   - \"Gentle Reminder\" → Use a courteous and friendly tone.\n   - \"Final Notice\" → Use a firm but respectful tone, indicating urgency.\n- Address the customer by name.\n- Include the invoice number, due date, and amount due.\n- Do not include any subject line, links, or sign-offs.\n- Do not mention the company name.\n- Format the email as plain text.\n- Only return the email content body, professionally worded and ready to be sent.\n\nReturn only the email message. No explanations.\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        0
+      ],
+      "id": "aecac30e-2304-4d10-8dec-9ac4c5d22b57",
+      "name": "Reminder Compose"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Based on customer history and urgency, should this message be sent via:\n1. Email\n2. SMS\n3. Both?\nInvoice is {{days_overdue}} days late. Past preference: {{preferred_contact_method}}.\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        2140,
+        20
+      ],
+      "id": "8735fcb7-2e52-407e-9b58-457b83bfaded",
+      "name": "Channel Selector"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "If no response is recorded in the past 3 reminders, suggest a follow-up call within 48 hours.\nOutput: YES/NO and best date/time for call.\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        2520,
+        40
+      ],
+      "id": "964c472d-bdea-448d-8b97-ea3d2eec2c72",
+      "name": "Follow-up Scheduler"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=If invoice is overdue > 30 days and customer is non-responsive, escalate to finance team.\nGenerate a summary:\n- Customer Name\n- Amount\n- Last Reminder Date\n- Days Overdue\n\nThe output strucrure is The below is the output sturcture to send the email so i need the ",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        2860,
+        160
+      ],
+      "id": "f2ca77b3-3437-4c48-83d0-f1328daae3b6",
+      "name": " Finance Notifier"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1mvoq97P5UkZDSwrdF18isacRZjFK3KpUaZzFwzfw38k",
+          "mode": "list",
+          "cachedResultName": "correct",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mvoq97P5UkZDSwrdF18isacRZjFK3KpUaZzFwzfw38k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 149176732,
+          "mode": "list",
+          "cachedResultName": "Sheet2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mvoq97P5UkZDSwrdF18isacRZjFK3KpUaZzFwzfw38k/edit#gid=149176732"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "output",
+              "displayName": "output",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        3280,
+        60
+      ],
+      "id": "e7f19850-e545-4faa-8667-244bd0c0174e",
+      "name": "Google Sheets2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "WUN15fcjFfjb8R0N",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Google Sheets').item.json['email_id'] }}",
+        "subject": "=Reminder that you have note paied your due",
+        "emailType": "text",
+        "message": "=Subject: Friendly Reminder Overdue\n\nDear {{ $('Google Sheets3').item.json.customer_name }},\n\nWe hope you're doing well. This is a gentle reminder that your invoice {{ $('Google Sheets3').item.json.invoice_number }}, originally due on {{ $('Google Sheets3').item.json.due_date }}, remains unpaid. The total amount due is ₹{{ $('Google Sheets3').item.json.amount_due }}.\n\nIf you’ve already processed this payment, please ignore this message. Otherwise, we’d appreciate it if you could look into it at your earliest convenience.\n\nThank you for your attention,  \nFinance Team\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3240,
+        320
+      ],
+      "id": "3cc7aabe-b02b-491f-8ec7-949915a6ea18",
+      "name": "Gmail",
+      "webhookId": "bcb980c5-80be-405a-afe2-a4fa10de4f0d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "0EO3K7f10y3sCyId",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "b028f924-08d8-45c3-9296-747579736baa",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ],
+      "id": "a20f1e7f-bc1b-4eb3-b127-a1229cd7bfcf",
+      "name": "Webhook",
+      "webhookId": "b028f924-08d8-45c3-9296-747579736baa"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1mvoq97P5UkZDSwrdF18isacRZjFK3KpUaZzFwzfw38k",
+          "mode": "list",
+          "cachedResultName": "correct",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mvoq97P5UkZDSwrdF18isacRZjFK3KpUaZzFwzfw38k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mvoq97P5UkZDSwrdF18isacRZjFK3KpUaZzFwzfw38k/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "customer_name": "={{ $json.body.customer_name }}",
+            "invoice_number": "={{ $json.body.invoice_number }}",
+            "due_date": "={{ $json.body.due_date }}",
+            "amount_due": "={{ $json.body.amount_due }}",
+            "email_id": "={{ $json.body.email_id }}",
+            "contact_method": "={{ $json.body.contact_method }}",
+            "status": "={{ $json.body.urgency_level }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "invoice_number",
+              "displayName": "invoice_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "due_date",
+              "displayName": "due_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "amount_due",
+              "displayName": "amount_due",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "contact_method",
+              "displayName": "contact_method",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email_id",
+              "displayName": "email_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "phone_number",
+              "displayName": "phone_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        960,
+        0
+      ],
+      "id": "9ab6d0e7-6fe6-4a49-a8bd-488f79ec6a4b",
+      "name": "Google Sheets3",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "WUN15fcjFfjb8R0N",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1mvoq97P5UkZDSwrdF18isacRZjFK3KpUaZzFwzfw38k",
+          "mode": "list",
+          "cachedResultName": "correct",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mvoq97P5UkZDSwrdF18isacRZjFK3KpUaZzFwzfw38k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mvoq97P5UkZDSwrdF18isacRZjFK3KpUaZzFwzfw38k/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1180,
+        0
+      ],
+      "id": "b902bec3-e143-467f-bd75-c62ef46a5515",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "WUN15fcjFfjb8R0N",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1780,
+        340
+      ],
+      "id": "891f8536-4327-4be5-8b91-7fd607cd2ef2",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "7Kg48zBQsLDg6CEk",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2140,
+        300
+      ],
+      "id": "56ac0e64-6604-4833-bb1b-f15962e74b49",
+      "name": "Google Gemini Chat Model4",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "7Kg48zBQsLDg6CEk",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": " Invoice Info Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " Invoice Info Extractor": {
+      "main": [
+        [
+          {
+            "node": "Reminder Compose",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Follow-up Scheduler",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": " Finance Notifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reminder Compose": {
+      "main": [
+        [
+          {
+            "node": "Channel Selector",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Channel Selector": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Follow-up Scheduler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Follow-up Scheduler": {
+      "main": [
+        [
+          {
+            "node": "Google Calendar",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": " Finance Notifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " Finance Notifier": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets2": {
+      "main": [
+        []
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets3": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": " Invoice Info Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Reminder Compose",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Channel Selector",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2cae0573-e0e9-48f7-9ed1-277fe3060560",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b2e847aea1afbad20bc986fdcca4d73233c1a19e7b9e6c4bff5fd7fc4c14840c"
+  },
+  "id": "CIvraECExk4OMrOn",
+  "tags": []
+}
